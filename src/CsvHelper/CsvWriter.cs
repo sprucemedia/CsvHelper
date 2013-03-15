@@ -297,20 +297,27 @@ namespace CsvHelper
 		/// </summary>
 		/// <typeparam name="T">The type of the record.</typeparam>
 		/// <param name="records">The list of records to write.</param>
-		public virtual void WriteRecords<T>( IEnumerable<T> records ) where T : class
+		public virtual bool WriteRecords<T>( IEnumerable<T> records ) where T : class
 		{
 			CheckDisposed();
 
-			if( configuration.HasHeaderRecord )
-			{
-				WriteHeader<T>();
-			}
-
+			bool written = false;
 			foreach( var record in records )
 			{
+				if ( !written )
+				{
+					if ( configuration.HasHeaderRecord )
+					{
+						WriteHeader<T>();
+					}
+					written = true;
+				}
+
 				GetWriteRecordAction<T>()( this, record );
 				NextRecord();
 			}
+
+			return written;
 		}
 
 		/// <summary>
@@ -318,20 +325,27 @@ namespace CsvHelper
 		/// </summary>
 		/// <param name="type">The type of the record.</param>
 		/// <param name="records">The list of records to write.</param>
-		public virtual void WriteRecords( Type type, IEnumerable<object> records )
+		public virtual bool WriteRecords( Type type, IEnumerable<object> records )
 		{
 			CheckDisposed();
 
-			if( configuration.HasHeaderRecord )
+			bool written = false;
+			foreach ( var record in records )
 			{
-				WriteHeader( type );
-			}
+				if ( !written )
+				{
+					if ( configuration.HasHeaderRecord )
+					{
+						WriteHeader( type );
+					}
+					written = true;
+				}
 
-			foreach( var record in records )
-			{
-				GetWriteRecordAction( type ).DynamicInvoke( this, record );
+				GetWriteRecordAction(type).DynamicInvoke(this, record);
 				NextRecord();
 			}
+
+			return written;
 		}
 
 		/// <summary>
